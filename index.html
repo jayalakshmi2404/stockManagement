@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cloud Inventory Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: url('Godow.png') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+    }
+
+    .login-box {
+      position: absolute;
+      top: 50%;
+      left: 8%;
+      transform: translateY(-50%);
+      background-color: rgba(11, 11, 11, 0.121);
+      padding: 40px;
+      border-radius: 18px;
+      box-shadow: 0px 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      width: 320px;
+    }
+
+    h2 {
+      font-size: 38px;
+      font-weight: bold;
+      margin-bottom: 25px;
+      color: #261403f5;
+      text-shadow: 0 0 8px rgb(225, 209, 103), 0 0 15px rgba(218,165,32,0.7);
+      letter-spacing: 3px;
+    }
+
+    input, select {
+      margin: 12px;
+      padding: 12px;
+      width: 260px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      background: rgba(250, 247, 247, 0.971);
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.2);
+      transition: 0.3s;
+      color: #03092c;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      box-shadow: 0px 0px 10px rgba(255,215,0,0.6);
+      transform: scale(1.05);
+    }
+
+    button {
+      background: linear-gradient(to right, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee);
+      color: #333;
+      font-weight: bold;
+      padding: 12px 35px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+      box-shadow: 0px 6px 15px rgba(0,0,0,0.25);
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #fbc2eb, #a6c1ee, #d4fc79, #96e6a1);
+      transform: scale(1.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>LOGIN</h2>
+    <input type="text" id="username" placeholder="USERNAME"><br>
+    <input type="password" id="password" placeholder="PASSWORD"><br>
+    <select id="role">
+      <option value="admin">Admin</option>
+      <option value="staff">Staff</option>
+    </select><br>
+    <button onclick="validateLogin()">Login</button>
+  </div>
+
+  <script>
+    function validateLogin() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const regex = /^[A-Z]{4}$/; // Only 4 capital letters
+
+      if (!regex.test(username)) {
+        alert("Enter the correct Username (4 capital letters)");
+        return;
+      }
+      if (password !== "YASH!@") {
+        alert("Incorrect Password");
+        return;
+      }
+
+      // ✅ Save role into localStorage
+      localStorage.setItem("role", role);
+
+      // ✅ Send login data to backend
+      fetch("http://localhost:3000/login-track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username, role: role })
+      })
+      .then(res => res.json())
+      .then(data => console.log("Login tracked:", data))
+      .catch(err => console.error("Error tracking login:", err));
+
+      // ✅ Redirect to dashboard
+      window.location.href = "stock.html";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Stock Management</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:"Segoe UI",sans-serif;
+      transition:0.4s;
+      min-height:100vh;
+      padding-bottom:40px;
+    }
+
+    /* =========================
+       ADMIN THEME
+    ========================== */
+
+    body.admin-theme{
+      background:#ffffff;
+      color:#222;
+    }
+
+    /* =========================
+       STAFF THEME
+    ========================== */
+
+    body.staff-theme{
+      background:#e3e3e3;
+      color:#222;
+    }
+
+    h2{
+      text-align:center;
+      font-size:58px;
+      font-weight:900;
+      color:#23395d;
+      margin-top:20px;
+      margin-bottom:25px;
+      letter-spacing:2px;
+      text-shadow:3px 3px 8px rgba(0,0,0,0.25);
+    }
+
+    /* =========================
+       CHART
+    ========================== */
+
+    #stockChart{
+      display:block;
+      margin:0 auto 35px auto;
+      background:#ffffff;
+      border-radius:18px;
+      padding:15px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    /* =========================
+       SECTION TITLE
+    ========================== */
+
+    .section-title{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:12px;
+      margin:45px 0 25px;
+      font-size:38px;
+      font-weight:800;
+      color:#6a1b9a;
+      text-shadow:1px 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .section-title img{
+      width:70px;
+      height:70px;
+      transition:0.3s;
+    }
+
+    .section-title img:hover{
+      transform:scale(1.1);
+    }
+
+    /* =========================
+       CARD CONTAINER
+    ========================== */
+
+    .cards-wrapper{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:25px;
+      padding:0 20px;
+    }
+
+    /* =========================
+       STOCK CARD
+    ========================== */
+
+    .stock-popup{
+      width:320px;
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 8px 18px rgba(0,0,0,0.15);
+      transition:0.3s;
+    }
+
+    .stock-popup:hover{
+      transform:translateY(-5px) scale(1.02);
+    }
+
+    .stock-popup h3{
+      margin-bottom:18px;
+      font-size:24px;
+      color:#111;
+    }
+
+    .label{
+      display:block;
+      margin-top:12px;
+      margin-bottom:6px;
+      font-weight:700;
+      font-size:16px;
+    }
+
+    input{
+      width:100%;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      font-size:15px;
+      outline:none;
+    }
+
+    input:focus{
+      border-color:#8e24aa;
+      box-shadow:0 0 5px rgba(142,36,170,0.4);
+    }
+
+    button{
+      margin-top:16px;
+      padding:10px 22px;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+      color:white;
+      font-size:15px;
+      font-weight:600;
+      background:linear-gradient(to right,#6a1b9a,#8e24aa,#ff4081);
+      transition:0.3s;
+    }
+
+    button:hover{
+      transform:scale(1.05);
+      background:linear-gradient(to right,#4a148c,#6a1b9a,#f50057);
+    }
+
+    /* =========================
+       AVAILABLE STOCK
+    ========================== */
+
+    .available{
+      margin-top:18px;
+      font-size:15px;
+      font-weight:700;
+      color:#b30000;
+      line-height:1.5;
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+
+    @media(max-width:768px){
+
+      h2{
+        font-size:40px;
+      }
+
+      #stockChart{
+        width:95% !important;
+        height:auto !important;
+      }
+
+      .section-title{
+        font-size:28px;
+      }
+
+      .stock-popup{
+        width:95%;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>GODOWN STOCK</h2>
+
+<canvas id="stockChart" width="1100" height="420"></canvas>
+
+<!-- =========================
+     GROUNDNUT
+========================= -->
+
+<div class="section-title">
+  <img src="peanut.png">
+  <span>Groundnut</span>
+</div>
+
+<div class="cards-wrapper">
+
+  <div class="stock-popup" style="background:#f6a192;">
+    <h3>RAVI SOLVEX</h3>
+
+    <input type="text" id="RAVI_current" value="78.500" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="RAVI_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="RAVI_unload">
+
+    <button onclick="calculateStock('RAVI')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="RAVI_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#f6a192;">
+    <h3>VITRAG</h3>
+
+    <input type="text" id="VITRAG_current" value="48.500" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="VITRAG_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="VITRAG_unload">
+
+    <button onclick="calculateStock('VITRAG')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="VITRAG_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#f6a192;">
+    <h3>SHREYA</h3>
+
+    <input type="text" id="SHREYA_current" value="15.500" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="SHREYA_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="SHREYA_unload">
+
+    <button onclick="calculateStock('SHREYA')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="SHREYA_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#f6a192;">
+    <h3>MANDEEP</h3>
+
+    <input type="text" id="MANDEEP_current" value="55.500" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="MANDEEP_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="MANDEEP_unload">
+
+    <button onclick="calculateStock('MANDEEP')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="MANDEEP_available"></span> MT
+    </p>
+  </div>
+
+</div>
+
+<!-- =========================
+     SOYA
+========================= -->
+
+<div class="section-title">
+  <img src="peas.png">
+  <span>Soya</span>
+</div>
+
+<div class="cards-wrapper">
+
+  <div class="stock-popup" style="background:#9bd7a5;">
+    <h3>ADM LATUR</h3>
+
+    <input type="text" id="LATUR_current" value="34.500" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="LATUR_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="LATUR_unload">
+
+    <button onclick="calculateStock('LATUR')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="LATUR_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#9bd7a5;">
+    <h3>ADM DARWARD</h3>
+
+    <input type="text" id="DARWARD_current" value="12.450" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="DARWARD_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="DARWARD_unload">
+
+    <button onclick="calculateStock('DARWARD')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="DARWARD_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#9bd7a5;">
+    <h3>DANRAJ</h3>
+
+    <input type="text" id="DANRAJ_current" value="49.850" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="DANRAJ_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="DANRAJ_unload">
+
+    <button onclick="calculateStock('DANRAJ')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="DANRAJ_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#9bd7a5;">
+    <h3>CARGIL</h3>
+
+    <input type="text" id="CARGIL_current" value="45.780" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="CARGIL_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="CARGIL_unload">
+
+    <button onclick="calculateStock('CARGIL')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="CARGIL_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#9bd7a5;">
+    <h3>BITUL</h3>
+
+    <input type="text" id="BITUL_current" value="71.230" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="BITUL_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="BITUL_unload">
+
+    <button onclick="calculateStock('BITUL')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="BITUL_available"></span> MT
+    </p>
+  </div>
+
+</div>
+
+<!-- =========================
+     SUNFLOWER DOC
+========================= -->
+
+<div class="section-title">
+  <img src="sunflower.png">
+  <span>Sunflower DOC</span>
+</div>
+
+<div class="cards-wrapper">
+
+  <div class="stock-popup" style="background:#f9d86e;">
+    <h3>NK</h3>
+
+    <input type="text" id="NK_current" value="19.000" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="NK_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="NK_unload">
+
+    <button onclick="calculateStock('NK')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="NK_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#f9d86e;">
+    <h3>MK</h3>
+
+    <input type="text" id="MK_current" value="56.879" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="MK_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="MK_unload">
+
+    <button onclick="calculateStock('MK')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="MK_available"></span> MT
+    </p>
+  </div>
+
+  <div class="stock-popup" style="background:#f9d86e;">
+    <h3>UKRAINE IMPORT</h3>
+
+    <input type="text" id="UKRAINE_current" value="36.450" readonly>
+
+    <label class="label">Sold (MT):</label>
+    <input type="number" id="UKRAINE_sold">
+
+    <label class="label">Unload Stock (MT):</label>
+    <input type="number" id="UKRAINE_unload">
+
+    <button onclick="calculateStock('UKRAINE')">Update</button>
+
+    <p class="available">
+      AVAILABLE STOCK:
+      <span id="UKRAINE_available"></span> MT
+    </p>
+  </div>
+
+</div>
+
+<script>
+
+  // =========================
+  // USER ROLE THEME
+  // =========================
+
+  const userRole = localStorage.getItem("role") || "admin";
+
+  if(userRole === "admin"){
+    document.body.classList.add("admin-theme");
+  }
+  else{
+    document.body.classList.add("staff-theme");
+  }
+
+  // =========================
+  // BRANDS
+  // =========================
+
+  const brands = [
+    "RAVI","VITRAG","SHREYA","MANDEEP",
+    "LATUR","DARWARD","DANRAJ","CARGIL","BITUL",
+    "NK","MK","UKRAINE"
+  ];
+
+  // =========================
+  // CHART
+  // =========================
+
+  const ctx = document.getElementById("stockChart").getContext("2d");
+
+  const stockChart = new Chart(ctx, {
+
+    type:"bar",
+
+    data:{
+      labels:[
+        "RAVI SOLVEX","VITRAG","SHREYA","MANDEEP",
+        "ADM LATUR","ADM DARWARD","DANRAJ","CARGIL","BITUL",
+        "NK","MK","UKRAINE IMPORT"
+      ],
+
+      datasets:[{
+
+        label:"Stock (MT)",
+
+        data:[
+          78.5,48.5,15.5,55.5,
+          34.5,12.45,49.85,45.78,71.23,
+          19.0,56.879,36.45
+        ],
+
+        backgroundColor:function(context){
+
+          const value = context.raw;
+
+          // RED FOR LOW STOCK
+          if(value <= 5){
+            return "#ff0000";
+          }
+
+          // Groundnut
+          if(context.dataIndex <= 3){
+            return "#f6a192";
+          }
+
+          // Soya
+          if(context.dataIndex >= 4 && context.dataIndex <= 8){
+            return "#9bd7a5";
+          }
+
+          // Sunflower
+          return "#f9d86e";
+        }
+
+      }]
+    },
+
+    options:{
+
+      responsive:false,
+
+      plugins:{
+        legend:{
+          labels:{
+            font:{
+              size:18,
+              weight:'bold'
+            }
+          }
+        }
+      },
+
+      scales:{
+
+        x:{
+          ticks:{
+            font:{
+              size:15,
+              weight:'bold'
+            }
+          }
+        },
+
+        y:{
+          beginAtZero:true,
+
+          ticks:{
+            font:{
+              size:14
+            }
+          }
+        }
+
+      }
+    }
+  });
+
+  // =========================
+  // SHOW AVAILABLE STOCK
+  // =========================
+
+  brands.forEach((brand) => {
+
+    const current =
+      parseFloat(
+        document.getElementById(brand + "_current").value
+      ) || 0;
+
+    const saved =
+      localStorage.getItem(brand + "_available");
+
+    const available =
+      saved !== null
+      ? parseFloat(saved)
+      : current;
+
+    // DISPLAY AVAILABLE STOCK
+    document.getElementById(
+      brand + "_available"
+    ).innerText = available.toFixed(3);
+
+    // UPDATE GRAPH
+    const index = brands.indexOf(brand);
+
+    if(index !== -1){
+      stockChart.data.datasets[0].data[index] = available;
+    }
+  });
+
+  stockChart.update();
+
+  // =========================
+  // CALCULATE STOCK
+  // =========================
+
+  function calculateStock(brand){
+
+    let prevAvailableText =
+      document.getElementById(brand + "_available").innerText;
+
+    let prevAvailable =
+      prevAvailableText && prevAvailableText.trim() !== ""
+      ? parseFloat(prevAvailableText)
+      : parseFloat(document.getElementById(brand + "_current").value);
+
+    const sold =
+      parseFloat(document.getElementById(brand + "_sold").value) || 0;
+
+    const unload =
+      userRole === "admin"
+      ? (parseFloat(document.getElementById(brand + "_unload").value) || 0)
+      : 0;
+
+    let available = prevAvailable - sold + unload;
+
+    // DISPLAY
+    document.getElementById(brand + "_available").innerText =
+      available.toFixed(3);
+
+    // SAVE
+    localStorage.setItem(
+      brand + "_available",
+      available.toFixed(3)
+    );
+
+    // RESET INPUTS
+    document.getElementById(brand + "_sold").value = "";
+
+    if(userRole === "admin"){
+      document.getElementById(brand + "_unload").value = "";
+    }
+
+    // UPDATE CHART
+    const index = brands.indexOf(brand);
+
+    if(index !== -1){
+
+      stockChart.data.datasets[0].data[index] = available;
+
+      stockChart.update();
+    }
+
+    // ALERT
+    if(available < 5){
+
+      alert(
+        "⚠️ " +
+        brand +
+        " stock is critically low: " +
+        available.toFixed(3) +
+        " MT"
+      );
+    }
+
+    // BACKEND API
+    fetch("https://stockmanagement-5.onrender.com",{
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+
+        brand:brand,
+
+        companyName:
+          document.getElementById(brand + "_company")
+          ? document.getElementById(brand + "_company").value
+          : brand + " Company",
+
+        sold:sold,
+        unload:unload,
+        current:available,
+        previous:prevAvailable,
+        updatedBy:userRole
+
+      })
+    })
+
+    .then(res => {
+
+      if(!res.ok){
+        throw new Error("Network response was not ok");
+      }
+
+      return res.json();
+    })
+
+    .then(data => {
+
+      console.log("Backend response:", data);
+
+      alert(data.message);
+
+    })
+
+    .catch(err => {
+
+      console.error("Error sending stock update:", err);
+
+      alert("❌ Failed to update stock. Check server logs.");
+
+    });
+  }
+
+</script>
+
+</body>
+</html>
