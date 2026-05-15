@@ -1,7 +1,8 @@
 require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 const cors = require("cors");
 const path = require("path");
 
@@ -40,22 +41,11 @@ mongoose.connect(process.env.MONGO_URI)
 });
 
 // ===============================
-// GMAIL TRANSPORTER - FIXED
+// SENDGRID SETUP
 // ===============================
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-console.log("✅ Gmail transporter created");
+console.log("✅ SendGrid initialized");
 
 // ===============================
 // STOCK SCHEMA
@@ -110,7 +100,9 @@ app.post("/updateStock", async (req, res) => {
     // VALIDATION
     // ===============================
     if (!brand || current === undefined) {
+
       console.log("❌ Invalid request");
+
       return res.status(400).json({
         success: false,
         message: "Invalid stock data"
@@ -134,53 +126,48 @@ app.post("/updateStock", async (req, res) => {
     console.log("✅ Stock saved:", stock._id);
 
     // ===============================
-    // EMAIL CONTENT
+    // SEND STOCK UPDATE EMAIL
     // ===============================
-    const mailOptions = {
-      from: process.env.GMAIL_USER,
-      to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
+    console.log("📨 Sending email to:", process.env.ALERT_EMAIL);
+
+    await sgMail.send({
+      to: process.env.ALERT_EMAIL,
+      from: process.env.SENDER_EMAIL,
       subject: `Stock Updated - ${brand}`,
       text: `
+Stock Update Report
+===================
 Brand: ${brand}
 Company: ${companyName}
-Previous Stock: ${previous}
-Sold: ${sold}
-Unload: ${unload}
-Current Stock: ${current}
+Previous Stock: ${previous} MT
+Sold: ${sold} MT
+Unload: ${unload} MT
+Current Stock: ${current} MT
 Updated By: ${updatedBy}
-      `
-    };
-
-    console.log("📨 Sending email...");
-
-    // ===============================
-    // SEND EMAIL
-    // ===============================
-    const info = await transporter.sendMail(mailOptions);
+`
+    });
 
     console.log("✅ EMAIL SENT");
-    console.log(info.response);
 
     // ===============================
     // LOW STOCK ALERT
     // ===============================
     if (Number(current) < 5) {
 
-      console.log("⚠️ LOW STOCK ALERT");
+      console.log("⚠️ LOW STOCK - Sending alert...");
 
-      await transporter.sendMail({
-        from: process.env.GMAIL_USER,
-        to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
+      await sgMail.send({
+        to: process.env.ALERT_EMAIL,
+        from: process.env.SENDER_EMAIL,
         subject: `⚠️ LOW STOCK ALERT - ${brand}`,
         text: `
-⚠️ LOW STOCK ALERT
-
+⚠️ LOW STOCK ALERT ⚠️
+======================
 Brand: ${brand}
-
 Remaining Stock: ${current} MT
 
-Please refill immediately.
-        `
+Please refill immediately!
+`
       });
 
       console.log("⚠️ LOW STOCK EMAIL SENT");
@@ -196,8 +183,7 @@ Please refill immediately.
 
   } catch (err) {
 
-    console.error("❌ UPDATE STOCK ERROR");
-    console.error(err);
+    console.error("❌ FULL ERROR:", err);
 
     return res.status(500).json({
       success: false,
