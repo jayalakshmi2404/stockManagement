@@ -1,31 +1,34 @@
 
-const nodemailer = require("nodemailer");
-require("dotenv").config();
+require('dotenv').config();
+const nodemailer = require('nodemailer');
 
-// ✅ FIXED TRANSPORTER (IMPORTANT)
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  service: "gmail",
   auth: {
-    user: "jayalaksja24@gmail.com",
-    pass: process.env.GMAIL_APP_PASSWORD, // MUST be App Password
-  },
-});
-
-// Email content
-const mailOptions = {
-  from: "jayalaksja24@gmail.com",
-  to: "monisha33124@gmail.com",
-  subject: "Test Mail",
-  text: "This is a test email from Node.js",
-};
-
-// Send email
-transporter.sendMail(mailOptions, (err, info) => {
-  if (err) {
-    console.error("❌ Email error:", err);
-  } else {
-    console.log("✅ Email sent:", info.response);
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
   }
 });
+
+async function sendTestMail() {
+
+  try {
+
+    const info = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
+      subject: "✅ Inventory Test Email",
+      text: "Inventory mail system is working correctly."
+    });
+
+    console.log("✅ TEST EMAIL SENT");
+    console.log(info.response);
+
+  } catch (err) {
+
+    console.error("❌ TEST MAIL FAILED");
+    console.error(err.message);
+  }
+}
+
+sendTestMail();

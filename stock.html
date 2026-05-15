@@ -476,152 +476,169 @@
 </div>
 
 <script>
-
   // =========================
   // USER ROLE THEME
   // =========================
-
   const userRole = localStorage.getItem("role") || "admin";
 
-  if(userRole === "admin"){
+  if (userRole === "admin") {
     document.body.classList.add("admin-theme");
-  }
-  else{
+  } else {
     document.body.classList.add("staff-theme");
   }
 
   // =========================
   // BRANDS
   // =========================
-
   const brands = [
-    "RAVI","VITRAG","SHREYA","MANDEEP",
-    "LATUR","DARWARD","DANRAJ","CARGIL","BITUL",
-    "NK","MK","UKRAINE"
+    "RAVI",
+    "VITRAG",
+    "SHREYA",
+    "MANDEEP",
+    "LATUR",
+    "DARWARD",
+    "DANRAJ",
+    "CARGIL",
+    "BITUL",
+    "NK",
+    "MK",
+    "UKRAINE"
   ];
 
   // =========================
   // CHART
   // =========================
-
   const ctx = document.getElementById("stockChart").getContext("2d");
 
   const stockChart = new Chart(ctx, {
+    type: "bar",
 
-    type:"bar",
-
-    data:{
-      labels:[
-        "RAVI SOLVEX","VITRAG","SHREYA","MANDEEP",
-        "ADM LATUR","ADM DARWARD","DANRAJ","CARGIL","BITUL",
-        "NK","MK","UKRAINE IMPORT"
+    data: {
+      labels: [
+        "RAVI SOLVEX",
+        "VITRAG",
+        "SHREYA",
+        "MANDEEP",
+        "ADM LATUR",
+        "ADM DARWARD",
+        "DANRAJ",
+        "CARGIL",
+        "BITUL",
+        "NK",
+        "MK",
+        "UKRAINE IMPORT"
       ],
 
-      datasets:[{
+      datasets: [{
+        label: "Stock (MT)",
 
-        label:"Stock (MT)",
-
-        data:[
-          78.5,48.5,15.5,55.5,
-          34.5,12.45,49.85,45.78,71.23,
-          19.0,56.879,36.45
+        data: [
+          78.5,
+          48.5,
+          15.5,
+          55.5,
+          34.5,
+          12.45,
+          49.85,
+          45.78,
+          71.23,
+          19.0,
+          56.879,
+          36.45
         ],
 
-        backgroundColor:function(context){
+        backgroundColor: function(context) {
 
           const value = context.raw;
 
-          // RED FOR LOW STOCK
-          if(value <= 5){
-            return "#ff0000";
-          }
+          if (value <= 5) return "#ff0000";
 
-          // Groundnut
-          if(context.dataIndex <= 3){
+          if (context.dataIndex <= 3) {
             return "#f6a192";
           }
 
-          // Soya
-          if(context.dataIndex >= 4 && context.dataIndex <= 8){
+          if (context.dataIndex >= 4 && context.dataIndex <= 8) {
             return "#9bd7a5";
           }
 
-          // Sunflower
           return "#f9d86e";
         }
-
       }]
     },
 
-    options:{
+    options: {
+      responsive: false,
 
-      responsive:false,
-
-      plugins:{
-        legend:{
-          labels:{
-            font:{
-              size:18,
-              weight:'bold'
+      plugins: {
+        legend: {
+          labels: {
+            font: {
+              size: 18,
+              weight: "bold"
             }
           }
         }
       },
 
-      scales:{
-
-        x:{
-          ticks:{
-            font:{
-              size:15,
-              weight:'bold'
+      scales: {
+        x: {
+          ticks: {
+            font: {
+              size: 15,
+              weight: "bold"
             }
           }
         },
 
-        y:{
-          beginAtZero:true,
+        y: {
+          beginAtZero: true,
 
-          ticks:{
-            font:{
-              size:14
+          ticks: {
+            font: {
+              size: 14
             }
           }
         }
-
       }
     }
   });
 
   // =========================
-  // SHOW AVAILABLE STOCK
+  // LOAD SAVED STOCK
   // =========================
-
   brands.forEach((brand) => {
 
+    const currentInput =
+      document.getElementById(brand + "_current");
+
+    if (!currentInput) return;
+
     const current =
-      parseFloat(
-        document.getElementById(brand + "_current").value
-      ) || 0;
+      parseFloat(currentInput.value) || 0;
 
     const saved =
       localStorage.getItem(brand + "_available");
 
     const available =
       saved !== null
-      ? parseFloat(saved)
-      : current;
+        ? parseFloat(saved)
+        : current;
 
-    // DISPLAY AVAILABLE STOCK
-    document.getElementById(
-      brand + "_available"
-    ).innerText = available.toFixed(3);
+    const availableEl =
+      document.getElementById(brand + "_available");
 
-    // UPDATE GRAPH
+    if (availableEl) {
+
+      availableEl.innerText =
+        available.toFixed(3);
+    }
+
     const index = brands.indexOf(brand);
 
-    if(index !== -1){
-      stockChart.data.datasets[0].data[index] = available;
+    if (index !== -1) {
+
+      stockChart.data.datasets[0].data[index] =
+        available;
     }
   });
 
@@ -630,120 +647,196 @@
   // =========================
   // CALCULATE STOCK
   // =========================
+  async function calculateStock(brand) {
 
-  function calculateStock(brand){
+    try {
 
-    let prevAvailableText =
-      document.getElementById(brand + "_available").innerText;
+      console.log("📦 Updating stock for:", brand);
 
-    let prevAvailable =
-      prevAvailableText && prevAvailableText.trim() !== ""
-      ? parseFloat(prevAvailableText)
-      : parseFloat(document.getElementById(brand + "_current").value);
+      // =========================
+      // PREVIOUS STOCK
+      // =========================
+      let prevAvailableText =
+        document.getElementById(
+          brand + "_available"
+        ).innerText;
 
-    const sold =
-      parseFloat(document.getElementById(brand + "_sold").value) || 0;
+      let prevAvailable =
+        prevAvailableText &&
+        prevAvailableText.trim() !== ""
+          ? parseFloat(prevAvailableText)
+          : parseFloat(
+              document.getElementById(
+                brand + "_current"
+              ).value
+            );
 
-    const unload =
-      userRole === "admin"
-      ? (parseFloat(document.getElementById(brand + "_unload").value) || 0)
-      : 0;
+      // =========================
+      // INPUT VALUES
+      // =========================
+      const sold =
+        parseFloat(
+          document.getElementById(
+            brand + "_sold"
+          ).value
+        ) || 0;
 
-    let available = prevAvailable - sold + unload;
+      const unload =
+        userRole === "admin"
+          ? (
+              parseFloat(
+                document.getElementById(
+                  brand + "_unload"
+                ).value
+              ) || 0
+            )
+          : 0;
 
-    // DISPLAY
-    document.getElementById(brand + "_available").innerText =
-      available.toFixed(3);
+      // =========================
+      // CALCULATE AVAILABLE
+      // =========================
+      let available =
+        prevAvailable - sold + unload;
 
-    // SAVE
-    localStorage.setItem(
-      brand + "_available",
-      available.toFixed(3)
-    );
-
-    // RESET INPUTS
-    document.getElementById(brand + "_sold").value = "";
-
-    if(userRole === "admin"){
-      document.getElementById(brand + "_unload").value = "";
-    }
-
-    // UPDATE CHART
-    const index = brands.indexOf(brand);
-
-    if(index !== -1){
-
-      stockChart.data.datasets[0].data[index] = available;
-
-      stockChart.update();
-    }
-
-    // ALERT
-    if(available < 5){
-
-      alert(
-        "⚠️ " +
-        brand +
-        " stock is critically low: " +
-        available.toFixed(3) +
-        " MT"
-      );
-    }
-
-    // BACKEND API
-    fetch("https://stockmanagement-5.onrender.com",{
-
-      method:"POST",
-
-      headers:{
-        "Content-Type":"application/json"
-      },
-
-      body:JSON.stringify({
-
-        brand:brand,
-
-        companyName:
-          document.getElementById(brand + "_company")
-          ? document.getElementById(brand + "_company").value
-          : brand + " Company",
-
-        sold:sold,
-        unload:unload,
-        current:available,
-        previous:prevAvailable,
-        updatedBy:userRole
-
-      })
-    })
-
-    .then(res => {
-
-      if(!res.ok){
-        throw new Error("Network response was not ok");
+      if (available < 0) {
+        available = 0;
       }
 
-      return res.json();
-    })
+      // =========================
+      // UPDATE DISPLAY
+      // =========================
+      document.getElementById(
+        brand + "_available"
+      ).innerText = available.toFixed(3);
 
-    .then(data => {
+      localStorage.setItem(
+        brand + "_available",
+        available.toFixed(3)
+      );
 
-      console.log("Backend response:", data);
+      // =========================
+      // RESET INPUTS
+      // =========================
+      document.getElementById(
+        brand + "_sold"
+      ).value = "";
 
-      alert(data.message);
+      if (userRole === "admin") {
 
-    })
+        const unloadInput =
+          document.getElementById(
+            brand + "_unload"
+          );
 
-    .catch(err => {
+        if (unloadInput) {
+          unloadInput.value = "";
+        }
+      }
 
-      console.error("Error sending stock update:", err);
+      // =========================
+      // UPDATE CHART
+      // =========================
+      const index =
+        brands.indexOf(brand);
 
-      alert("❌ Failed to update stock. Check server logs.");
+      if (index !== -1) {
 
-    });
+        stockChart.data.datasets[0].data[index] =
+          available;
+
+        stockChart.update();
+      }
+
+      // =========================
+      // LOW STOCK ALERT
+      // =========================
+      if (available < 5) {
+
+        alert(
+          `⚠️ ${brand} stock is critically low: ${available.toFixed(3)} MT`
+        );
+      }
+
+      // =========================
+      // REQUEST PAYLOAD
+      // =========================
+      const payload = {
+
+        brand: brand,
+
+        companyName:
+          document.getElementById(
+            brand + "_company"
+          )
+            ? document.getElementById(
+                brand + "_company"
+              ).value
+            : brand + " Company",
+
+        sold: Number(sold),
+
+        unload: Number(unload),
+
+        previous: Number(prevAvailable),
+
+        current: Number(available),
+
+        updatedBy: userRole
+      };
+
+      console.log("📤 Sending payload:", payload);
+
+      // =========================
+      // API CALL
+      // =========================
+      const response = await fetch(
+        "/updateStock",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify(payload)
+        }
+      );
+
+      console.log(
+        "📡 Response status:",
+        response.status
+      );
+
+      const data = await response.json();
+
+      console.log(
+        "✅ Backend response:",
+        data
+      );
+
+      // =========================
+      // SUCCESS / ERROR
+      // =========================
+      if (response.ok) {
+
+        alert(`✅ ${data.message}`);
+
+      } else {
+
+        alert(`❌ ${data.message}`);
+      }
+
+    } catch (error) {
+
+      console.error(
+        "❌ FETCH ERROR:",
+        error
+      );
+
+      alert(
+        "❌ Failed to update stock"
+      );
+    }
   }
-
-</script>
-
-</body>
+</script></body>
 </html>

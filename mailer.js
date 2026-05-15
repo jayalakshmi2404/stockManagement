@@ -1,7 +1,7 @@
+
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// SMTP Transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -10,28 +10,43 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Function to send alert email
+transporter.verify((err) => {
+  if (err) {
+    console.log("❌ Gmail verification failed:", err.message);
+  } else {
+    console.log("✅ Gmail transporter ready");
+  }
+});
+
 async function sendStockAlert(product, brand, availableStock) {
+
   try {
-    const mailOptions = {
+
+    const info = await transporter.sendMail({
       from: process.env.GMAIL_USER,
-      to: 'jayalaksja24@gmail.com',
-      subject: 'STOCK ALERT',
-      text:
-        `⚠️ STOCK ALERT ⚠️\n\n` +
-        `Product: ${product}\n` +
-        `Brand: ${brand}\n` +
-        `Available Stock: ${availableStock} MT\n\n` +
-        `IN NEED OF GOODS`
-    };
+      to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
+      subject: `⚠️ STOCK ALERT - ${brand}`,
+      text: `
+⚠️ STOCK ALERT ⚠️
 
-    const info = await transporter.sendMail(mailOptions);
+Product: ${product}
+Brand: ${brand}
+Available Stock: ${availableStock}
 
-    console.log('Email sent:', info.response);
+Please restock immediately.
+      `
+    });
+
+    console.log("✅ Alert email sent");
+    console.log(info.response);
+
     return true;
 
   } catch (error) {
-    console.error('Error sending mail:', error.message);
+
+    console.error("❌ Error sending alert email:");
+    console.error(error.message);
+
     return false;
   }
 }
