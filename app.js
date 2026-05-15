@@ -1,5 +1,5 @@
+javascript
 require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
@@ -41,26 +41,26 @@ mongoose.connect(process.env.MONGO_URI)
 });
 
 // ===============================
-// GMAIL TRANSPORTER
+// GMAIL TRANSPORTER - FIXED
 // ===============================
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
 transporter.verify((err) => {
-
   if (err) {
-
     console.log("❌ Gmail verify failed:");
     console.log(err.message);
-
   } else {
-
     console.log("✅ Gmail ready");
   }
 });
@@ -69,7 +69,6 @@ transporter.verify((err) => {
 // STOCK SCHEMA
 // ===============================
 const stockSchema = new mongoose.Schema({
-
   brand: String,
   companyName: String,
   sold: Number,
@@ -77,7 +76,6 @@ const stockSchema = new mongoose.Schema({
   previous: Number,
   current: Number,
   updatedBy: String,
-
   updatedAt: {
     type: Date,
     default: Date.now
@@ -90,7 +88,6 @@ const Stock = mongoose.model("Stock", stockSchema);
 // HEALTH ROUTE
 // ===============================
 app.get("/health", (req, res) => {
-
   res.json({
     success: true,
     message: "Server running successfully"
@@ -121,9 +118,7 @@ app.post("/updateStock", async (req, res) => {
     // VALIDATION
     // ===============================
     if (!brand || current === undefined) {
-
       console.log("❌ Invalid request");
-
       return res.status(400).json({
         success: false,
         message: "Invalid stock data"
@@ -134,21 +129,13 @@ app.post("/updateStock", async (req, res) => {
     // SAVE STOCK
     // ===============================
     const stock = await Stock.create({
-
       brand: brand,
-
       companyName: companyName || "",
-
       sold: Number(sold || 0),
-
       unload: Number(unload || 0),
-
       previous: Number(previous || 0),
-
       current: Number(current || 0),
-
       updatedBy: updatedBy || "Admin",
-
       updatedAt: new Date()
     });
 
@@ -158,26 +145,16 @@ app.post("/updateStock", async (req, res) => {
     // EMAIL CONTENT
     // ===============================
     const mailOptions = {
-
       from: process.env.GMAIL_USER,
-
       to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
-
       subject: `Stock Updated - ${brand}`,
-
       text: `
 Brand: ${brand}
-
 Company: ${companyName}
-
 Previous Stock: ${previous}
-
 Sold: ${sold}
-
 Unload: ${unload}
-
 Current Stock: ${current}
-
 Updated By: ${updatedBy}
       `
     };
@@ -200,13 +177,9 @@ Updated By: ${updatedBy}
       console.log("⚠️ LOW STOCK ALERT");
 
       await transporter.sendMail({
-
         from: process.env.GMAIL_USER,
-
         to: process.env.ALERT_EMAIL || process.env.GMAIL_USER,
-
         subject: `⚠️ LOW STOCK ALERT - ${brand}`,
-
         text: `
 ⚠️ LOW STOCK ALERT
 
@@ -225,9 +198,7 @@ Please refill immediately.
     // SUCCESS RESPONSE
     // ===============================
     return res.status(200).json({
-
       success: true,
-
       message: "Stock updated and email sent successfully"
     });
 
@@ -237,9 +208,7 @@ Please refill immediately.
     console.error(err);
 
     return res.status(500).json({
-
       success: false,
-
       message: err.message
     });
   }
@@ -251,6 +220,5 @@ Please refill immediately.
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-
   console.log(`🚀 Server running on port ${PORT}`);
 });
