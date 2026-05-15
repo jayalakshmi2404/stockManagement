@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -56,14 +55,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-transporter.verify((err) => {
-  if (err) {
-    console.log("❌ Gmail verify failed:");
-    console.log(err.message);
-  } else {
-    console.log("✅ Gmail ready");
-  }
-});
+console.log("✅ Gmail transporter created");
 
 // ===============================
 // STOCK SCHEMA
