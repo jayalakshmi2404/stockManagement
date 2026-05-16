@@ -1,10 +1,9 @@
 require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
-const sgMail = require("@sendgrid/mail");
 const cors = require("cors");
 const path = require("path");
+const sgMail = require("@sendgrid/mail");
 
 const app = express();
 
@@ -44,8 +43,7 @@ mongoose.connect(process.env.MONGO_URI)
 // SENDGRID SETUP
 // ===============================
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-console.log("✅ SendGrid initialized");
+console.log("✅ SendGrid ready");
 
 // ===============================
 // STOCK SCHEMA
@@ -100,9 +98,7 @@ app.post("/updateStock", async (req, res) => {
     // VALIDATION
     // ===============================
     if (!brand || current === undefined) {
-
       console.log("❌ Invalid request");
-
       return res.status(400).json({
         success: false,
         message: "Invalid stock data"
@@ -128,11 +124,9 @@ app.post("/updateStock", async (req, res) => {
     // ===============================
     // SEND STOCK UPDATE EMAIL
     // ===============================
-    console.log("📨 Sending email to:", process.env.ALERT_EMAIL);
-
-    await sgMail.send({
+    const updateMail = {
       to: process.env.ALERT_EMAIL,
-      from: process.env.SENDER_EMAIL,
+      from: process.env.GMAIL_USER,
       subject: `Stock Updated - ${brand}`,
       text: `
 Stock Update Report
@@ -144,21 +138,23 @@ Sold: ${sold} MT
 Unload: ${unload} MT
 Current Stock: ${current} MT
 Updated By: ${updatedBy}
-`
-    });
+      `
+    };
 
-    console.log("✅ EMAIL SENT");
+    console.log("📨 Sending stock update email to:", process.env.ALERT_EMAIL);
+    await sgMail.send(updateMail);
+    console.log("✅ STOCK UPDATE EMAIL SENT");
 
     // ===============================
     // LOW STOCK ALERT
     // ===============================
     if (Number(current) < 5) {
 
-      console.log("⚠️ LOW STOCK - Sending alert...");
+      console.log("⚠️ LOW STOCK ALERT - Sending alert email...");
 
-      await sgMail.send({
+      const alertMail = {
         to: process.env.ALERT_EMAIL,
-        from: process.env.SENDER_EMAIL,
+        from: process.env.GMAIL_USER,
         subject: `⚠️ LOW STOCK ALERT - ${brand}`,
         text: `
 ⚠️ LOW STOCK ALERT ⚠️
@@ -167,9 +163,10 @@ Brand: ${brand}
 Remaining Stock: ${current} MT
 
 Please refill immediately!
-`
-      });
+        `
+      };
 
+      await sgMail.send(alertMail);
       console.log("⚠️ LOW STOCK EMAIL SENT");
     }
 
@@ -183,7 +180,7 @@ Please refill immediately!
 
   } catch (err) {
 
-    console.error("❌ FULL ERROR:", err);
+    console.error("❌ UPDATE STOCK ERROR:", err.message);
 
     return res.status(500).json({
       success: false,
