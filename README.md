@@ -12,7 +12,3 @@ Built using **Node.js**, **MongoDB**, and **Express**.
 1. Clone the repository  
 2. Run `npm install`  
 3. Start the server with `npm start`
-
-## License
-This project is licensed under the MIT License.
-
