@@ -1,3 +1,6 @@
+
+https://stockmanagement-1-ikl9.onrender.com
+
 # Stock Management System
 
 A dynamic web application for managing inventory efficiently.  
